@@ -15,7 +15,7 @@ import {
   CheckSquare,
 } from 'lucide-react';
 
-export const Sidebar = () => {
+export const Sidebar = ({ isOpen = false, onClose = () => {} }) => {
   const { user } = useAuth();
   const role = user?.role || 'student';
 
@@ -47,13 +47,17 @@ export const Sidebar = () => {
   if (role === 'admin' || role === 'superadmin') links = adminLinks;
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200/80 min-h-[calc(100vh-4rem)] flex flex-col justify-between shrink-0">
+    <aside
+      className={`fixed left-0 top-16 bottom-0 z-50 flex h-[calc(100vh-4rem)] w-72 max-w-[85vw] shrink-0 flex-col justify-between overflow-y-auto border-r border-slate-200/80 bg-white transition-transform duration-200 lg:static lg:z-auto lg:h-auto lg:min-h-[calc(100vh-4rem)] lg:w-64 lg:max-w-none lg:translate-x-0 ${
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}
+    >
       <div className="p-4 space-y-6">
         {/* Role Identity Tag */}
         <div className="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Portal Workspace</p>
-            <p className="text-xs font-bold text-slate-800 capitalize">
+            <p className="break-words text-xs font-bold text-slate-800 capitalize">
               {role === 'staff' ? `${user.department_name || 'Staff'} Cell` : `${role} Workspace`}
             </p>
           </div>
@@ -68,8 +72,9 @@ export const Sidebar = () => {
               <NavLink
                 key={item.to}
                 to={item.to}
+                onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  `flex min-w-0 items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                     isActive
                       ? 'bg-brand-50 text-brand-700 shadow-xs border border-brand-100/60 font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -77,7 +82,7 @@ export const Sidebar = () => {
                 }
               >
                 <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
+                <span className="break-words">{item.label}</span>
               </NavLink>
             );
           })}
@@ -95,4 +100,3 @@ export const Sidebar = () => {
     </aside>
   );
 };
-

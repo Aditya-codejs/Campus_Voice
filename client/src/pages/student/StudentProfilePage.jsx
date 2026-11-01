@@ -56,40 +56,40 @@ export const StudentProfilePage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="w-full min-w-0 max-w-4xl mx-auto space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Student Profile & Security</h1>
+        <h1 className="break-words text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Student Profile & Security</h1>
         <p className="text-xs text-slate-500">Manage your enrollment details, contact preferences, and password.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Summary Card */}
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-brand-100 text-brand-700 font-extrabold text-2xl flex items-center justify-center border border-brand-200 mx-auto">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
           <div className="text-center space-y-1">
-            <h2 className="text-base font-bold text-slate-900">{user?.name}</h2>
-            <p className="text-xs text-slate-400">{user?.email}</p>
+            <h2 className="break-words text-base font-bold text-slate-900">{user?.name}</h2>
+            <p className="break-all text-xs text-slate-400">{user?.email}</p>
             <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-brand-50 text-brand-700 border border-brand-200 mt-1">
               {user?.role}
             </span>
           </div>
 
           <div className="border-t border-slate-100 pt-4 space-y-2.5 text-xs text-slate-600">
-            <div className="flex items-center justify-between">
+            <div className="flex min-w-0 items-start justify-between gap-2">
               <span className="text-slate-400">Enrollment No:</span>
-              <strong className="font-mono">{user?.enrollment_number || 'N/A'}</strong>
+              <strong className="break-all text-right font-mono">{user?.enrollment_number || 'N/A'}</strong>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex min-w-0 items-start justify-between gap-2">
               <span className="text-slate-400">Department:</span>
-              <strong className="truncate max-w-[140px]">{user?.department_name || 'General'}</strong>
+              <strong className="max-w-[60%] break-words text-right">{user?.department_name || 'General'}</strong>
             </div>
           </div>
         </div>
 
         {/* Right Side: Forms */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="min-w-0 lg:col-span-2 space-y-6">
           {/* Edit Profile Form */}
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -226,4 +226,3 @@ export const StudentProfilePage = () => {
     </div>
   );
 };
-

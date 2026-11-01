@@ -64,14 +64,14 @@ export const AdminDashboard = () => {
   const statusStats = data?.statusStats || [];
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       {/* Top Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-brand-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="space-y-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-brand-300 bg-brand-950/80 px-3 py-1 rounded-full border border-brand-700/60">
             Administrative Control Center
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="break-words text-2xl sm:text-3xl font-extrabold tracking-tight">
             Institutional Grievance Analytics
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
@@ -101,7 +101,7 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Primary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Filed</span>
           <p className="text-2xl font-extrabold text-slate-900 mt-1">{metrics.totalComplaints}</p>
@@ -145,7 +145,7 @@ export const AdminDashboard = () => {
       {/* Interactive Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Department Workload Breakdown */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+        <div className="min-w-0 bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Complaints by Department</h3>
@@ -182,7 +182,7 @@ export const AdminDashboard = () => {
         </div>
 
         {/* Category Distribution */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+        <div className="min-w-0 bg-white rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-slate-900">Category Distribution</h3>
@@ -267,4 +267,3 @@ export const AdminDashboard = () => {
     </div>
   );
 };
-

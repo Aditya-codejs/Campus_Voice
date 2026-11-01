@@ -44,7 +44,7 @@ export const ConfirmationModal = ({
           <p className="text-slate-600 text-sm leading-relaxed">{message}</p>
         </div>
 
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-3">
+        <div className="px-4 sm:px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-end gap-3">
           <button
             type="button"
             onClick={onCancel}
@@ -69,4 +69,3 @@ export const ConfirmationModal = ({
     </div>
   );
 };
-

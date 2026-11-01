@@ -45,14 +45,14 @@ export const StudentDashboard = () => {
   const pending = complaints.filter((c) => c.status === 'submitted').length;
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-brand-900 via-brand-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="space-y-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-brand-300 bg-brand-950/60 px-3 py-1 rounded-full border border-brand-700/60">
             Student Dashboard
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="break-words text-2xl sm:text-3xl font-extrabold tracking-tight">
             Welcome, {user?.name}!
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
@@ -70,7 +70,7 @@ export const StudentDashboard = () => {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-4 gap-4 sm:gap-6">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Filed</span>
@@ -118,7 +118,7 @@ export const StudentDashboard = () => {
 
       {/* Recent Complaints Table */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-slate-900">Recent Complaints</h2>
             <p className="text-xs text-slate-400">Your latest logged issues and their current progress.</p>
@@ -157,7 +157,7 @@ export const StudentDashboard = () => {
                 className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors group"
               >
                 <div className="space-y-1.5 flex-1">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-xs font-bold text-brand-700 bg-brand-50 px-2.5 py-0.5 rounded-md border border-brand-200">
                       {c.complaint_code}
                     </span>
@@ -192,4 +192,3 @@ export const StudentDashboard = () => {
     </div>
   );
 };
-

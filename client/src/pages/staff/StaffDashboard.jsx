@@ -49,7 +49,7 @@ export const StaffDashboard = () => {
   ).length;
 
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-8">
       {/* Staff Banner */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div className="space-y-2">
@@ -57,7 +57,7 @@ export const StaffDashboard = () => {
             <Building className="w-3.5 h-3.5" />
             {user?.department_name || 'Department'} Grievance Desk
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+          <h1 className="break-words text-2xl sm:text-3xl font-extrabold tracking-tight">
             Officer Portal &bull; {user?.name}
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
@@ -75,7 +75,7 @@ export const StaffDashboard = () => {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Department Total</span>
           <p className="text-2xl font-extrabold text-slate-900 mt-1">{total}</p>
@@ -100,7 +100,7 @@ export const StaffDashboard = () => {
           <span className="text-[11px] text-slate-400">Fixed & confirmed</span>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs col-span-2 lg:col-span-1">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs col-span-1 sm:col-span-2 lg:col-span-1">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Overdue SLA</span>
           <p className="text-2xl font-extrabold text-rose-600 mt-1">{overdue}</p>
           <span className="text-[11px] text-rose-500 font-semibold">Immediate attention needed</span>
@@ -109,7 +109,7 @@ export const StaffDashboard = () => {
 
       {/* Assigned Queue Table */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-slate-900">Active Department Queue</h2>
             <p className="text-xs text-slate-400">Select any ticket to post progress updates or record a fix.</p>
@@ -183,4 +183,3 @@ export const StaffDashboard = () => {
     </div>
   );
 };
-

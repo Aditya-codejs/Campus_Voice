@@ -168,7 +168,7 @@ export const StaffComplaintDetail = () => {
         </div>
 
         {/* Details Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-100 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 pt-4 border-t border-slate-100 text-xs">
           <div>
             <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Department</span>
             <span className="font-semibold text-slate-800">{complaint.department?.name || 'Department'}</span>
@@ -210,7 +210,7 @@ export const StaffComplaintDetail = () => {
 
       {/* Tabs */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-        <div className="flex border-b border-slate-100 bg-slate-50/50 px-6 gap-6">
+        <div className="flex min-w-0 overflow-x-auto border-b border-slate-100 bg-slate-50/50 px-4 sm:px-6 gap-4 sm:gap-6">
           {[
             { id: 'comments', label: 'Investigation Notes & Replies', icon: MessageSquare, count: comments.length },
             { id: 'timeline', label: 'Timeline History', icon: History, count: timeline.length },
@@ -222,7 +222,7 @@ export const StaffComplaintDetail = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 text-xs font-bold flex items-center gap-2 border-b-2 transition-all ${
+                className={`min-w-max py-4 text-xs font-bold flex items-center gap-2 border-b-2 transition-all ${
                   active
                     ? 'border-brand-600 text-brand-600'
                     : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -242,7 +242,7 @@ export const StaffComplaintDetail = () => {
           })}
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {activeTab === 'comments' && (
             <ComplaintComments
               complaintId={complaint._id}
@@ -398,4 +398,3 @@ export const StaffComplaintDetail = () => {
     </div>
   );
 };
-

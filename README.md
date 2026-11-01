@@ -8,7 +8,7 @@ CampusVoice is a modern, enterprise-grade university complaint and grievance red
 
 ### 1. Multi-Role Workspaces & Role-Based Access Control (RBAC)
 - **Student Portal**:
-  - Independent student registration with roll number, course, year, and department.
+  - Independent student registration with roll number, course, and academic year; department selection is not required.
   - Multi-attribute complaint submission with **100% Anonymous Reporting** mode.
   - File attachments support (images & PDFs up to 5 MB per file).
   - Unique human-readable Tracking Code (`SCT-YYYY-NNNNNN`).

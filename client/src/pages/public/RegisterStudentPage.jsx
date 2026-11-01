@@ -1,43 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { GraduationCap, User, Mail, Hash, BookOpen, Calendar, Lock, ArrowRight, AlertCircle } from 'lucide-react';
-import api from '../../services/api';
+import { GraduationCap, User, Mail, Hash, BookOpen, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 
 export const RegisterStudentPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     enrollment_number: '',
-    department: '',
     course: '',
     academic_year: '1st Year',
     password: '',
     confirm_password: '',
   });
 
-  const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const { registerStudent } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchDepts = async () => {
-      try {
-        const res = await api.get('/departments');
-        if (res.data.success) {
-          setDepartments(res.data.data.departments);
-          if (res.data.data.departments.length > 0) {
-            setFormData((prev) => ({ ...prev, department: res.data.data.departments[0]._id }));
-          }
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchDepts();
-  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,7 +38,14 @@ export const RegisterStudentPage = () => {
     }
 
     setLoading(true);
-    const result = await registerStudent(formData);
+    const result = await registerStudent({
+      name: formData.name,
+      email: formData.email,
+      enrollment_number: formData.enrollment_number,
+      course: formData.course,
+      academic_year: formData.academic_year,
+      password: formData.password,
+    });
     setLoading(false);
 
     if (result.success) {
@@ -70,13 +57,13 @@ export const RegisterStudentPage = () => {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-slate-50">
-      <div className="max-w-2xl w-full bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 sm:p-10">
+      <div className="max-w-2xl w-full min-w-0 bg-white rounded-3xl shadow-xl border border-slate-200/80 p-5 sm:p-10">
         <div className="flex items-center space-x-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center">
             <GraduationCap className="w-6 h-6" />
           </div>
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Student Registration</h2>
+          <div className="min-w-0">
+            <h2 className="break-words text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Student Registration</h2>
             <p className="text-xs text-slate-500">Create your official student grievance account.</p>
           </div>
         </div>
@@ -124,7 +111,7 @@ export const RegisterStudentPage = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
+            <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1">Enrollment / Roll Number</label>
               <div className="relative">
                 <Hash className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
@@ -138,22 +125,6 @@ export const RegisterStudentPage = () => {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-xs uppercase"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Department</label>
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-xs"
-              >
-                {departments.map((d) => (
-                  <option key={d._id} value={d._id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
             </div>
           </div>
 
@@ -252,4 +223,3 @@ export const RegisterStudentPage = () => {
     </div>
   );
 };
-

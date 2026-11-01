@@ -83,7 +83,7 @@ export const NotificationDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-fade-in">
+        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-fade-in">
           <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
             <div className="flex items-center space-x-2">
               <span className="font-bold text-slate-800 text-sm">Notifications</span>
@@ -141,4 +141,3 @@ export const NotificationDropdown = () => {
     </div>
   );
 };
-

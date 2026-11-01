@@ -95,6 +95,40 @@ Now open **http://localhost:5173** in your browser.
 
 ---
 
+## Free Online Deployment
+
+The client deploys from `client/` to GitHub Pages, and the API deploys from `server/` to Render.
+
+### GitHub Pages
+
+1. In GitHub, create the repository variable `VITE_API_URL` with the full Render API URL ending in `/api`, for example `https://<render-service>.onrender.com/api`.
+2. In **Settings → Pages**, set the source to **GitHub Actions**.
+3. Push to `main` or run the `Deploy client to GitHub Pages` workflow manually. The site URL is `https://<github-user>.github.io/Campus_Voice/`.
+
+### Render
+
+Create a free **Web Service** for this repository:
+
+- Root Directory: `server`
+- Build Command: `npm ci`
+- Start Command: `npm start`
+
+Set Render environment variables (use private values for secrets):
+
+| Key | Value |
+|---|---|
+| `NODE_ENV` | `production` |
+| `MONGO_URI` | `mongodb+srv://<database-user>:<url-encoded-password>@<cluster-host>/campusvoice?retryWrites=true&w=majority` |
+| `JWT_SECRET` | `<at-least-32-random-characters>` |
+| `JWT_EXPIRE` | `7d` |
+| `CLIENT_URL` | `https://<github-user>.github.io` |
+| `CLIENT_APP_URL` | `https://<github-user>.github.io/Campus_Voice` |
+| `SEED_DEMO_DATA` | `false` |
+
+Render provides `PORT` automatically. Configure Atlas Network Access to allow the Render service’s outbound IP addresses (or a suitable provider-approved network range); do not expose credentials in client settings or GitHub Pages.
+
+---
+
 ## 🔑 Local Demo Accounts
 
 These fictional accounts are created only when `SEED_DEMO_DATA=true` is used with a local MongoDB URI outside production:

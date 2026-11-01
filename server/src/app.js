@@ -26,20 +26,15 @@ app.use(
 );
 
 // CORS configuration
-const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-];
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, true); // Allow local development networks
-      }
+      callback(null, !origin || allowedOrigins.includes(origin));
     },
     credentials: true,
   })
@@ -94,4 +89,3 @@ app.use('/api/*', (req, res) => {
 app.use(errorHandler);
 
 export default app;
-

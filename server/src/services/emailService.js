@@ -1,5 +1,10 @@
 import { getTransporter } from '../config/mailer.js';
 
+const getClientPageUrl = (path) => {
+  const appUrl = process.env.CLIENT_APP_URL || process.env.CLIENT_URL?.split(',')[0] || 'http://localhost:5173';
+  return `${appUrl.replace(/\/+$/, '')}/#/${path.replace(/^\/+/, '')}`;
+};
+
 const emailWrapper = (title, bodyHtml) => `
 <!DOCTYPE html>
 <html>
@@ -100,7 +105,7 @@ export const sendStaffStatusEmail = async (staffUser, status, reason = '') => {
       <p>Dear ${staffUser.name},</p>
       <p>Your staff account for department <strong>${staffUser.department_name || 'Assigned Department'}</strong> has been <strong>approved</strong> by the administrator.</p>
       <p>You can now sign in to your staff dashboard to view, acknowledge, and resolve assigned grievances.</p>
-      <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/login" class="btn">Sign In to Staff Dashboard</a>
+      <a href="${getClientPageUrl('login')}" class="btn">Sign In to Staff Dashboard</a>
     `
     : `
       <p>Dear ${staffUser.name},</p>
@@ -120,7 +125,7 @@ export const sendStaffStatusEmail = async (staffUser, status, reason = '') => {
 // 3. Complaint Submission Confirmation Email
 export const sendComplaintCreatedEmail = async (studentEmail, studentName, complaint) => {
   const title = 'Complaint Successfully Submitted';
-  const trackingUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/track/${complaint.complaint_code}`;
+  const trackingUrl = getClientPageUrl(`track/${complaint.complaint_code}`);
 
   const body = `
     <p>Dear ${studentName},</p>
@@ -146,7 +151,7 @@ export const sendComplaintCreatedEmail = async (studentEmail, studentName, compl
 // 4. Complaint Assignment Email
 export const sendComplaintAssignedEmail = async (staffEmail, staffName, complaint) => {
   const title = 'New Complaint Assigned to You';
-  const complaintUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/staff/complaints/${complaint._id}`;
+  const complaintUrl = getClientPageUrl(`staff/complaints/${complaint._id}`);
 
   const body = `
     <p>Dear ${staffName},</p>
@@ -171,7 +176,7 @@ export const sendComplaintAssignedEmail = async (staffEmail, staffName, complain
 // 5. Complaint Status Update Email
 export const sendComplaintStatusEmail = async (studentEmail, studentName, complaint, note = '') => {
   const title = `Status Update on Complaint ${complaint.complaint_code}`;
-  const trackingUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/track/${complaint.complaint_code}`;
+  const trackingUrl = getClientPageUrl(`track/${complaint.complaint_code}`);
 
   const body = `
     <p>Dear ${studentName},</p>
@@ -198,7 +203,7 @@ export const sendComplaintStatusEmail = async (studentEmail, studentName, compla
 
 // 6. Password Reset Email
 export const sendPasswordResetEmail = async (user, resetToken) => {
-  const resetUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+  const resetUrl = getClientPageUrl(`reset-password/${resetToken}`);
   const title = 'Password Reset Request';
 
   const body = `
@@ -216,4 +221,3 @@ export const sendPasswordResetEmail = async (user, resetToken) => {
     text: `Reset your password here: ${resetUrl}`,
   });
 };
-

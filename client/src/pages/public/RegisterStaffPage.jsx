@@ -51,8 +51,8 @@ export const RegisterStaffPage = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters long');
+    if (formData.password.length < 12) {
+      setErrorMsg('Password must be at least 12 characters long');
       return;
     }
 
@@ -204,10 +204,11 @@ export const RegisterStaffPage = () => {
                 <input
                   type="password"
                   required
+                  minLength={12}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 12 characters"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-xs"
                 />
               </div>
@@ -220,6 +221,7 @@ export const RegisterStaffPage = () => {
                 <input
                   type="password"
                   required
+                  minLength={12}
                   name="confirm_password"
                   value={formData.confirm_password}
                   onChange={handleChange}
@@ -256,4 +258,3 @@ export const RegisterStaffPage = () => {
     </div>
   );
 };
-

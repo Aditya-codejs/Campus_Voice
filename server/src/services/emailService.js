@@ -46,6 +46,9 @@ export const sendEmail = async ({ to, subject, html, text }) => {
   const from = process.env.EMAIL_FROM || 'CampusVoice Grievance Cell <no-reply@college.edu>';
 
   if (!transporter) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SMTP is not configured; email delivery is unavailable.');
+    }
     console.log(`\n================== [EMAIL SIMULATION] ==================`);
     console.log(`To: ${to}`);
     console.log(`From: ${from}`);

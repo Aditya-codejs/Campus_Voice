@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from './config/db.js';
+import { getJwtSecret } from './config/auth.js';
 import { initMailer } from './config/mailer.js';
 import { initSlaCronJobs } from './jobs/slaCron.js';
 
@@ -13,6 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
+    getJwtSecret();
     const { default: app } = await import('./app.js');
 
     // Connect to Database

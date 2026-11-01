@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { getJwtSecret } from '../config/auth.js';
 import { sendError } from '../utils/apiResponse.js';
 
 export const protect = async (req, res, next) => {
@@ -17,7 +18,7 @@ export const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'university_jwt_fallback_key');
+    const decoded = jwt.verify(token, getJwtSecret());
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -54,4 +55,3 @@ export const authorize = (...roles) => {
     next();
   };
 };
-

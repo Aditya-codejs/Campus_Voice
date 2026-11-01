@@ -17,6 +17,7 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { PriorityBadge } from '../../components/common/PriorityBadge';
 import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { downloadComplaintCsv } from '../../services/downloadComplaintCsv';
 
 export const AdminComplaintsPage = () => {
   const [complaints, setComplaints] = useState([]);
@@ -154,8 +155,12 @@ export const AdminComplaintsPage = () => {
     }
   };
 
-  const handleExportCsv = () => {
-    window.open('/api/admin/export-csv', '_blank');
+  const handleExportCsv = async () => {
+    try {
+      await downloadComplaintCsv();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to export complaints.');
+    }
   };
 
   return (
@@ -378,7 +383,10 @@ export const AdminComplaintsPage = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1">Target Department</label>
                 <select
                   value={assignDept}
-                  onChange={(e) => setAssignDept(e.target.value)}
+                  onChange={(e) => {
+                    setAssignDept(e.target.value);
+                    setAssignStaff('');
+                  }}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-xs"
                 >
                   {departments.map((d) => (
@@ -399,11 +407,17 @@ export const AdminComplaintsPage = () => {
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-xs"
                 >
                   <option value="">Assign to Department Pool</option>
-                  {staffList.map((s) => (
+                  {staffList
+                    .filter(
+                      (staff) =>
+                        staff.status === 'approved' &&
+                        String(staff.department?._id || staff.department) === String(assignDept)
+                    )
+                    .map((s) => (
                     <option key={s._id} value={s._id}>
                       {s.name} ({s.department?.name || 'Staff'})
                     </option>
-                  ))}
+                    ))}
                 </select>
               </div>
 
@@ -483,4 +497,3 @@ export const AdminComplaintsPage = () => {
     </div>
   );
 };
-

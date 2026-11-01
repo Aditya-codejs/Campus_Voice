@@ -23,4 +23,3 @@ export const logActivity = async ({
     console.error('[Audit Log Error]', error.message);
   }
 };
-

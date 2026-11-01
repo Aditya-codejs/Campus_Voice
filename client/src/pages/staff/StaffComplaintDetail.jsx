@@ -24,6 +24,7 @@ import { Timeline } from '../../components/complaints/Timeline';
 import { ComplaintComments } from '../../components/complaints/ComplaintComments';
 import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { resolveFileUrl } from '../../services/fileUrl';
 
 export const StaffComplaintDetail = () => {
   const { id } = useParams();
@@ -283,7 +284,7 @@ export const StaffComplaintDetail = () => {
                         </div>
                       </div>
                       <a
-                        href={file.file_url}
+                        href={resolveFileUrl(file.file_url)}
                         target="_blank"
                         rel="noreferrer"
                         download

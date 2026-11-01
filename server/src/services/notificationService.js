@@ -18,8 +18,8 @@ export const createNotification = async ({
     });
   } catch (error) {
     console.error('[Notification Service Error]', error.message);
+    throw error;
   }
 };
 
 export { emailService };
-

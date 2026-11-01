@@ -24,6 +24,7 @@ import { Timeline } from '../../components/complaints/Timeline';
 import { ComplaintComments } from '../../components/complaints/ComplaintComments';
 import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { resolveFileUrl } from '../../services/fileUrl';
 
 export const ComplaintDetailPage = () => {
   const { id } = useParams();
@@ -129,8 +130,6 @@ export const ComplaintDetailPage = () => {
     if (complaint.resolved_at) {
       const daysSince = (Date.now() - new Date(complaint.resolved_at).getTime()) / (1000 * 60 * 60 * 24);
       canReopen = daysSince <= 7;
-    } else {
-      canReopen = true;
     }
   }
 
@@ -326,7 +325,7 @@ export const ComplaintDetailPage = () => {
                         </div>
                       </div>
                       <a
-                        href={file.file_url}
+                        href={resolveFileUrl(file.file_url)}
                         target="_blank"
                         rel="noreferrer"
                         download

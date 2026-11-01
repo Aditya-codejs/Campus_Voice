@@ -6,6 +6,9 @@ import { AuditLog } from '../models/AuditLog.js';
 import { sendSuccess, sendError } from '../utils/apiResponse.js';
 import { sendStaffStatusEmail } from '../services/emailService.js';
 import { logActivity } from '../services/auditService.js';
+import { escapeCsvCell } from '../utils/csv.js';
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // @desc    Get Comprehensive Analytics & Dashboard Metrics
 // @route   GET /api/admin/dashboard-stats
@@ -205,31 +208,44 @@ export const getUsers = async (req, res, next) => {
     const { role, search, page = 1, limit = 15 } = req.query;
     const query = {};
 
-    if (role && role !== 'all') query.role = role;
-    if (search) {
+    if (
+      typeof role === 'string' &&
+      role !== 'all' &&
+      !['student', 'staff', 'admin', 'superadmin'].includes(role)
+    ) {
+      return sendError(res, 400, 'Invalid user role filter.');
+    }
+    if (typeof search === 'string' && search.length > 100) {
+      return sendError(res, 400, 'Search must be 100 characters or fewer.');
+    }
+    if (typeof role === 'string' && role !== 'all') query.role = role;
+    if (typeof search === 'string' && search.trim()) {
+      const safeSearch = escapeRegex(search.trim());
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-        { enrollment_number: { $regex: search, $options: 'i' } },
-        { employee_id: { $regex: search, $options: 'i' } },
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { email: { $regex: safeSearch, $options: 'i' } },
+        { enrollment_number: { $regex: safeSearch, $options: 'i' } },
+        { employee_id: { $regex: safeSearch, $options: 'i' } },
       ];
     }
 
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const pageNumber = Math.max(1, Number.parseInt(page, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 15));
+    const skip = (pageNumber - 1) * pageSize;
     const total = await User.countDocuments(query);
 
     const users = await User.find(query)
       .populate('department', 'name code')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit, 10));
+      .limit(pageSize);
 
     return sendSuccess(res, 200, 'Users retrieved successfully', {
       users,
       pagination: {
         total,
-        page: parseInt(page, 10),
-        pages: Math.ceil(total / parseInt(limit, 10)),
+        page: pageNumber,
+        pages: Math.ceil(total / pageSize),
       },
     });
   } catch (error) {
@@ -243,21 +259,23 @@ export const getUsers = async (req, res, next) => {
 export const getAuditLogs = async (req, res, next) => {
   try {
     const { page = 1, limit = 25 } = req.query;
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const pageNumber = Math.max(1, Number.parseInt(page, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 25));
+    const skip = (pageNumber - 1) * pageSize;
     const total = await AuditLog.countDocuments();
 
     const logs = await AuditLog.find()
       .populate('user', 'name email role')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit, 10));
+      .limit(pageSize);
 
     return sendSuccess(res, 200, 'Audit logs retrieved', {
       logs,
       pagination: {
         total,
-        page: parseInt(page, 10),
-        pages: Math.ceil(total / parseInt(limit, 10)),
+        page: pageNumber,
+        pages: Math.ceil(total / pageSize),
       },
     });
   } catch (error) {
@@ -295,21 +313,21 @@ export const exportComplaintsCsv = async (req, res, next) => {
     ];
 
     const rows = complaints.map((c) => [
-      `"${c.complaint_code}"`,
-      `"${(c.title || '').replace(/"/g, '""')}"`,
-      `"${c.category?.name || ''}"`,
-      `"${c.department?.name || ''}"`,
-      `"${c.status}"`,
-      `"${c.priority}"`,
-      `"${c.is_anonymous ? 'Anonymous' : c.student?.name || ''}"`,
-      `"${c.is_anonymous ? 'Protected' : c.student?.email || ''}"`,
-      `"${c.assigned_to?.name || 'Unassigned'}"`,
-      `"${(c.location || '').replace(/"/g, '""')}"`,
-      `"${c.due_date ? new Date(c.due_date).toISOString() : ''}"`,
-      `"${new Date(c.createdAt).toISOString()}"`,
-      `"${c.resolved_at ? new Date(c.resolved_at).toISOString() : ''}"`,
-      `"${c.rating || ''}"`,
-    ]);
+      c.complaint_code,
+      c.title,
+      c.category?.name,
+      c.department?.name,
+      c.status,
+      c.priority,
+      c.is_anonymous ? 'Anonymous' : c.student?.name,
+      c.is_anonymous ? 'Protected' : c.student?.email,
+      c.assigned_to?.name || 'Unassigned',
+      c.location,
+      c.due_date ? new Date(c.due_date).toISOString() : '',
+      new Date(c.createdAt).toISOString(),
+      c.resolved_at ? new Date(c.resolved_at).toISOString() : '',
+      c.rating,
+    ].map(escapeCsvCell));
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
 
@@ -320,4 +338,3 @@ export const exportComplaintsCsv = async (req, res, next) => {
     next(error);
   }
 };
-

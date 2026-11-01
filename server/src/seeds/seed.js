@@ -88,16 +88,23 @@ const isLocalMongoUri = (uri) => {
 };
 
 const createInitialAdmin = async () => {
-  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD;
-
-  if (email && await User.findOne({ email })) {
-    console.log('[Seed] Admin email already exists; existing user was left unchanged.');
+  const existingAdmin = await User.exists({ role: { $in: ['admin', 'superadmin'] } });
+  if (existingAdmin) {
+    console.log('[Seed] An administrator already exists; initial bootstrap skipped.');
     return;
   }
 
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+
   if (!email || !password || password.length < 16) {
     console.warn('[Seed] Configured administrator was not created: set ADMIN_EMAIL and a unique ADMIN_PASSWORD of at least 16 characters.');
+    return;
+  }
+
+  const existingUser = await User.findOne({ email }).select('_id role');
+  if (existingUser) {
+    console.warn('[Seed] Configured ADMIN_EMAIL already belongs to an account; no records were changed.');
     return;
   }
 

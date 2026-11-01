@@ -38,8 +38,8 @@ export const StudentProfilePage = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setPassError('New password must be at least 6 characters');
+    if (passwordData.newPassword.length < 12) {
+      setPassError('New password must be at least 12 characters');
       return;
     }
 
@@ -192,6 +192,7 @@ export const StudentProfilePage = () => {
                   <input
                     type="password"
                     required
+                    minLength={12}
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-xs"

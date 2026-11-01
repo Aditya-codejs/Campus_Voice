@@ -27,12 +27,15 @@ import {
   Legend,
 } from 'recharts';
 import api from '../../services/api';
+import { downloadComplaintCsv } from '../../services/downloadComplaintCsv';
+import { useToast } from '../../context/ToastContext';
 
 const COLORS = ['#026bc9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4'];
 
 export const AdminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -50,8 +53,12 @@ export const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  const handleExportCsv = () => {
-    window.open('/api/admin/export-csv', '_blank');
+  const handleExportCsv = async () => {
+    try {
+      await downloadComplaintCsv();
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to export complaints.');
+    }
   };
 
   if (loading) {

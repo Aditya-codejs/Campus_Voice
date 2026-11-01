@@ -73,7 +73,9 @@ Ensure the default departments and categories exist, and create the initial admi
 ```bash
 npm run seed
 ```
-Set `ADMIN_EMAIL` and a unique `ADMIN_PASSWORD` of at least 16 characters in `server/.env`. Existing accounts are left unchanged.
+For a first-time Admin bootstrap, set `ADMIN_NAME`, `ADMIN_EMAIL`, and a unique `ADMIN_PASSWORD` of at least 16 characters in the private `server/.env`, then run the seed command once against the intended database. The seed checks for an existing `admin` or `superadmin` first and skips creation if one is present; if the email belongs to another account, that account is not changed. The password is hashed by the User model. Remove `ADMIN_PASSWORD` from the environment after bootstrap. This does not reset an existing account's password.
+
+To reset an existing Admin password, use **Forgot password** on the login page and follow the emailed one-hour reset link; configure SMTP for delivery. Do not rely on the local email simulation for a production reset.
 
 Local-only demo accounts are opt-in. Set `SEED_DEMO_DATA=true` and use a local MongoDB URI; the seed command refuses to create demos on Atlas or in production.
 
@@ -156,7 +158,7 @@ NODE_ENV=development
 MONGO_URI=mongodb://127.0.0.1:27017/complaint_tracker
 
 # JWT Authentication
-JWT_SECRET=super_secret_university_jwt_key_2026_secure
+JWT_SECRET=<generate-a-unique-random-secret-at-least-32-characters>
 JWT_EXPIRE=7d
 CLIENT_URL=http://localhost:5173
 

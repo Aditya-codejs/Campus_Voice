@@ -15,6 +15,9 @@ import {
 } from '../services/emailService.js';
 import { createNotification } from '../services/notificationService.js';
 import { logActivity } from '../services/auditService.js';
+import { canAccessComplaint } from '../utils/complaintAccess.js';
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // Helper to mask anonymous student info
 const maskStudentIfAnonymous = (complaint, currentUserId, currentUserRole) => {
@@ -30,8 +33,6 @@ const maskStudentIfAnonymous = (complaint, currentUserId, currentUserRole) => {
         name: 'Anonymous Student',
         email: 'Protected',
         enrollment_number: 'Protected',
-        course: plain.student?.course || '',
-        academic_year: plain.student?.academic_year || '',
       };
     }
   }
@@ -124,7 +125,7 @@ export const createComplaint = async (req, res, next) => {
     // Notify Admins
     const admins = await User.find({ role: { $in: ['admin', 'superadmin'] } });
     for (const admin of admins) {
-      createNotification({
+      await createNotification({
         recipientId: admin._id,
         title: 'New Grievance Submitted',
         message: `New complaint [${complaint.complaint_code}] in ${deptDoc.name}: "${complaint.title}"`,
@@ -171,35 +172,79 @@ export const getComplaints = async (req, res, next) => {
     } = req.query;
 
     const query = {};
+    const validStatuses = [
+      'submitted',
+      'under_review',
+      'assigned',
+      'in_progress',
+      'need_more_info',
+      'escalated',
+      'resolved',
+      'closed',
+      'reopened',
+      'rejected',
+    ];
+    if (typeof status === 'string' && status && !validStatuses.includes(status)) {
+      return sendError(res, 400, 'Invalid complaint status filter.');
+    }
+    if (
+      typeof priority === 'string' &&
+      priority &&
+      !['low', 'medium', 'high', 'critical'].includes(priority)
+    ) {
+      return sendError(res, 400, 'Invalid priority filter.');
+    }
+    if (typeof search === 'string' && search.length > 100) {
+      return sendError(res, 400, 'Search must be 100 characters or fewer.');
+    }
 
     // Role-based restrictions
     if (req.user.role === 'student') {
       query.student = req.user._id;
     } else if (req.user.role === 'staff') {
-      // Staff sees complaints assigned to their department OR directly assigned to them
-      query.$or = [{ department: req.user.department }, { assigned_to: req.user._id }];
+      const sensitiveCategoryIds = await Category.find({ is_sensitive: true }).distinct('_id');
+      query.$or = [
+        { assigned_to: req.user._id },
+        {
+          department: req.user.department,
+          category: { $nin: sensitiveCategoryIds },
+        },
+      ];
     }
 
     // Filters
-    if (status) query.status = status;
-    if (priority) query.priority = priority;
-    if (department) query.department = department;
-    if (category) query.category = category;
+    if (typeof status === 'string' && status) query.status = status;
+    if (typeof priority === 'string' && priority) query.priority = priority;
+    if (typeof department === 'string' && department) {
+      if (!/^[0-9a-fA-F]{24}$/.test(department)) {
+        return sendError(res, 400, 'Invalid department filter.');
+      }
+      query.department = department;
+    }
+    if (typeof category === 'string' && category) {
+      if (!/^[0-9a-fA-F]{24}$/.test(category)) {
+        return sendError(res, 400, 'Invalid category filter.');
+      }
+      query.category = category;
+    }
 
     // Search query
-    if (search) {
+    if (typeof search === 'string' && search.trim()) {
+      const safeSearch = escapeRegex(search.trim());
       query.$and = query.$and || [];
       query.$and.push({
         $or: [
-          { title: { $regex: search, $options: 'i' } },
-          { description: { $regex: search, $options: 'i' } },
-          { complaint_code: { $regex: search, $options: 'i' } },
-          { location: { $regex: search, $options: 'i' } },
+          { title: { $regex: safeSearch, $options: 'i' } },
+          { description: { $regex: safeSearch, $options: 'i' } },
+          { complaint_code: { $regex: safeSearch, $options: 'i' } },
+          { location: { $regex: safeSearch, $options: 'i' } },
         ],
       });
     }
 
-    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+    const pageNumber = Math.max(1, Number.parseInt(page, 10) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 10));
+    const skip = (pageNumber - 1) * pageSize;
     const total = await Complaint.countDocuments(query);
 
     const complaints = await Complaint.find(query)
@@ -209,7 +254,7 @@ export const getComplaints = async (req, res, next) => {
       .populate('assigned_to', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(parseInt(limit, 10));
+      .limit(pageSize);
 
     // Mask anonymous info
     const sanitizedComplaints = complaints.map((c) =>
@@ -220,9 +265,9 @@ export const getComplaints = async (req, res, next) => {
       complaints: sanitizedComplaints,
       pagination: {
         total,
-        page: parseInt(page, 10),
-        pages: Math.ceil(total / parseInt(limit, 10)),
-        limit: parseInt(limit, 10),
+        page: pageNumber,
+        pages: Math.ceil(total / pageSize),
+        limit: pageSize,
       },
     });
   } catch (error) {
@@ -246,32 +291,29 @@ export const getComplaintById = async (req, res, next) => {
     }
 
     // Role check: Student can only see their own complaint
-    if (
-      req.user.role === 'student' &&
-      String(complaint.student?._id) !== String(req.user._id)
-    ) {
+    if (!canAccessComplaint(complaint, req.user)) {
       return sendError(res, 403, 'Unauthorized access to this complaint.');
     }
 
-    // Staff can only see their department's complaint
-    if (
-      req.user.role === 'staff' &&
-      String(complaint.department?._id) !== String(req.user.department) &&
-      String(complaint.assigned_to?._id) !== String(req.user._id)
-    ) {
-      return sendError(res, 403, 'Unauthorized access to this department complaint.');
-    }
-
     // Fetch attachments
-    const attachments = await ComplaintAttachment.find({ complaint: complaint._id }).populate(
-      'uploaded_by',
-      'name role'
-    );
+    const hideUploader = complaint.is_anonymous && req.user.role === 'staff';
+    const attachmentsQuery = ComplaintAttachment.find({ complaint: complaint._id });
+    const attachments = hideUploader
+      ? await attachmentsQuery
+      : await attachmentsQuery.populate('uploaded_by', 'name role');
 
     // Fetch timeline history
     const timeline = await ComplaintStatusHistory.find({ complaint: complaint._id })
       .sort({ createdAt: 1 })
       .populate('changed_by', 'name role');
+    if (complaint.is_anonymous && req.user.role === 'staff') {
+      timeline.forEach((entry) => {
+        if (entry.changed_by?.role === 'student') {
+          entry.changed_by_name = 'Anonymous Student';
+          entry.changed_by = undefined;
+        }
+      });
+    }
 
     // Fetch comments (if student, exclude internal notes!)
     const commentQuery = { complaint: complaint._id };
@@ -279,9 +321,14 @@ export const getComplaintById = async (req, res, next) => {
       commentQuery.is_internal = false;
     }
 
-    const comments = await ComplaintComment.find(commentQuery)
-      .sort({ createdAt: 1 })
-      .populate('user', 'name role');
+    const comments = await ComplaintComment.find(commentQuery).sort({ createdAt: 1 });
+    if (complaint.is_anonymous && req.user.role === 'staff') {
+      comments.forEach((comment) => {
+        if (comment.user_role === 'student') {
+          comment.user_name = 'Anonymous Student';
+        }
+      });
+    }
 
     const sanitized = maskStudentIfAnonymous(complaint, req.user._id, req.user.role);
 
@@ -302,10 +349,32 @@ export const getComplaintById = async (req, res, next) => {
 export const updateComplaintStatus = async (req, res, next) => {
   try {
     const { status, note, rejection_reason, resolution_summary } = req.body;
-    const complaint = await Complaint.findById(req.params.id).populate('student', 'name email');
+    const complaint = await Complaint.findById(req.params.id)
+      .populate('student', 'name email')
+      .populate('category', 'is_sensitive');
 
     if (!complaint) {
       return sendError(res, 404, 'Complaint not found.');
+    }
+
+    if (!canAccessComplaint(complaint, req.user)) {
+      return sendError(res, 403, 'You are not authorized to update this complaint.');
+    }
+
+    const validStatuses = [
+      'submitted',
+      'under_review',
+      'assigned',
+      'in_progress',
+      'need_more_info',
+      'escalated',
+      'resolved',
+      'closed',
+      'reopened',
+      'rejected',
+    ];
+    if (!validStatuses.includes(status)) {
+      return sendError(res, 400, 'Invalid complaint status.');
     }
 
     const oldStatus = complaint.status;
@@ -352,7 +421,7 @@ export const updateComplaintStatus = async (req, res, next) => {
         note || rejection_reason || resolution_summary
       ).catch(() => {});
 
-      createNotification({
+      await createNotification({
         recipientId: complaint.student._id,
         title: `Complaint Status: ${status.replace('_', ' ').toUpperCase()}`,
         message: `Your complaint [${complaint.complaint_code}] is now ${status.replace('_', ' ')}.`,
@@ -389,16 +458,25 @@ export const assignComplaint = async (req, res, next) => {
     }
 
     if (department_id) {
-      const dept = await Department.findById(department_id);
+      const dept = await Department.findOne({ _id: department_id, is_active: true });
       if (!dept) return sendError(res, 404, 'Department not found.');
       complaint.department = dept._id;
     }
 
     let assignedStaff = null;
     if (staff_id) {
-      assignedStaff = await User.findOne({ _id: staff_id, role: 'staff' });
-      if (!assignedStaff) return sendError(res, 404, 'Staff member not found.');
+      assignedStaff = await User.findOne({
+        _id: staff_id,
+        role: 'staff',
+        status: 'approved',
+        department: complaint.department,
+      });
+      if (!assignedStaff) {
+        return sendError(res, 400, 'Select an approved staff member from the complaint department.');
+      }
       complaint.assigned_to = assignedStaff._id;
+    } else if (Object.prototype.hasOwnProperty.call(req.body, 'staff_id')) {
+      complaint.assigned_to = null;
     }
 
     // Auto update status if currently submitted or under_review
@@ -420,7 +498,7 @@ export const assignComplaint = async (req, res, next) => {
 
     if (assignedStaff) {
       sendComplaintAssignedEmail(assignedStaff.email, assignedStaff.name, complaint).catch(() => {});
-      createNotification({
+      await createNotification({
         recipientId: assignedStaff._id,
         title: 'New Complaint Assignment',
         message: `Complaint [${complaint.complaint_code}] has been assigned to you.`,
@@ -487,11 +565,12 @@ export const reopenComplaint = async (req, res, next) => {
     }
 
     // 7-day rule check
-    if (complaint.resolved_at) {
-      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-      if (Date.now() - new Date(complaint.resolved_at).getTime() > sevenDaysMs) {
-        return sendError(res, 400, 'Complaint cannot be reopened after 7 days from resolution.');
-      }
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    if (
+      !complaint.resolved_at ||
+      Date.now() - new Date(complaint.resolved_at).getTime() > sevenDaysMs
+    ) {
+      return sendError(res, 400, 'Complaint cannot be reopened after 7 days from resolution.');
     }
 
     const oldStatus = complaint.status;
@@ -530,12 +609,21 @@ export const submitFeedback = async (req, res, next) => {
     if (!['resolved', 'closed'].includes(complaint.status)) {
       return sendError(res, 400, 'Feedback can only be submitted after resolution.');
     }
-
-    if (!rating || rating < 1 || rating > 5) {
-      return sendError(res, 400, 'Rating must be an integer between 1 and 5.');
+    if (
+      complaint.resolved_at &&
+      Date.now() - new Date(complaint.resolved_at).getTime() > 7 * 24 * 60 * 60 * 1000
+    ) {
+      return sendError(res, 400, 'Feedback can only be submitted within 7 days of resolution.');
     }
 
-    complaint.rating = rating;
+    if (!Number.isInteger(Number(rating)) || Number(rating) < 1 || Number(rating) > 5) {
+      return sendError(res, 400, 'Rating must be an integer between 1 and 5.');
+    }
+    if (complaint.rating !== null && complaint.rating !== undefined) {
+      return sendError(res, 400, 'Feedback has already been submitted for this complaint.');
+    }
+
+    complaint.rating = Number(rating);
     if (feedback) complaint.feedback = feedback;
     complaint.status = 'closed';
     complaint.closed_at = new Date();
@@ -562,8 +650,16 @@ export const trackComplaintPublic = async (req, res, next) => {
     }
 
     const timeline = await ComplaintStatusHistory.find({ complaint: complaint._id })
-      .select('new_status old_status note createdAt changed_by_name')
+      .select('new_status old_status note createdAt changed_by_name changed_by')
       .sort({ createdAt: 1 });
+    await ComplaintStatusHistory.populate(timeline, { path: 'changed_by', select: 'role' });
+    if (complaint.is_anonymous) {
+      timeline.forEach((entry) => {
+        if (entry.changed_by?.role === 'student') {
+          entry.changed_by_name = 'Anonymous Student';
+        }
+      });
+    }
 
     return sendSuccess(res, 200, 'Tracking information retrieved', {
       complaint: {
@@ -584,4 +680,3 @@ export const trackComplaintPublic = async (req, res, next) => {
     next(error);
   }
 };
-

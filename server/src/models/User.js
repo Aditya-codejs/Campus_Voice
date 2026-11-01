@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../config/auth.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -82,6 +83,16 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: (_doc, ret) => {
+        delete ret.password;
+        delete ret.verification_token;
+        delete ret.reset_password_token;
+        delete ret.reset_password_expire;
+        delete ret.__v;
+        return ret;
+      },
+    },
   }
 );
 
@@ -109,7 +120,7 @@ userSchema.methods.getSignedJwtToken = function () {
       status: this.status,
       email: this.email,
     },
-    process.env.JWT_SECRET || 'university_jwt_fallback_key',
+    getJwtSecret(),
     {
       expiresIn: process.env.JWT_EXPIRE || '7d',
     }
@@ -117,4 +128,3 @@ userSchema.methods.getSignedJwtToken = function () {
 };
 
 export const User = mongoose.model('User', userSchema);
-
